@@ -21,53 +21,56 @@ var DoodleModule = new function() {
             },
         });
 
-        DoodleModule.saving = 0;
+        var q = [];
         var b = $('body');
         var s = $('.saving');
         this.db.saveStroke = function(from, to) {
             DoodleModule.saving += 1;
             b.css({background: 'rgb(100, 0, 0)'});
-            this.stores.strokes.put((new Date), {
-                from: from,
-                to: to,
-                color: 'black',
-            }).then(function(){
-                DoodleModule.saving -= 1;
-                s.text(DoodleModule.saving);
-                if (DoodleModule.saving === 0) {
-                    b.css({background: 'white'});
-                }
+            q.push({key: (new Date), value: {from:from, to:to, color: 'black'}});
+        };
+
+        this.db.commitStrokes = function() {
+            this.stores.strokes.putmany(q).then(function(){
+                b.css({background: 'white'});
             });
+            q = [];
         };
 
         this.db.on('opensuccess', function() {
-            DoodleModule.app.db.stores.strokes.walk()
+            root.$broadcast('dataReady', this);
+        });
+
+        var root = angular.element(document.querySelector('[ng-app]')).scope();
+    }
+
+    app.controller('PlayStrokes', function($scope) {
+
+        var root = angular.element(document.querySelector('[ng-app]')).scope();
+        root.$on('dataReady', function(root, db) {
+            $scope.db = db;
+            console.log(db);
+            $scope.redraw();
+        });
+
+        $scope.redraw = function() {
+            this.blank();
+            this.db.stores.strokes.walk()
                 .on('each', function(record) {
-                    app.scope.drawStrokes([
+                    $scope.drawStrokes([
                         record.value.from,
                         record.value.to
                     ]);
                 })
             ;
-        });
-    }
-
-    app.factory('Strokes', function() {
-        app.data = new function() {
-            this.background = 'lightgrey';
         };
-        return app.data;
-    });
 
-    app.controller('PlayStrokes', function($scope, Strokes) {
-        app.scope = $scope;
-
-        $scope.redraw = function() {
+        $scope.blank = function() {
             var ctx = $scope.ctx
             ,   width = $scope.width
             ,   height = $scope.height
             ;
-            ctx.fillStyle = Strokes.background;
+            ctx.fillStyle = 'lightgrey';
             ctx.fillRect(0, 0, width, height);
         }
 
@@ -96,6 +99,10 @@ var DoodleModule = new function() {
                 app.db.saveStroke(last_pos, pos);
             }
         };
+
+        $scope.doneDrawing = function() {
+            app.db.commitStrokes();
+        };
     });
 
     function getContext(el) {
@@ -122,8 +129,6 @@ var DoodleModule = new function() {
             $scope.ctx = ctx;
             $scope.width = width;
             $scope.height = height;
-            
-            $scope.redraw();
         }
     });
 
@@ -153,6 +158,7 @@ var DoodleModule = new function() {
             element.on('mouseup mouseleave', function(e) {
                 $scope.drawing = false;
                 $scope.last_pos = null;
+                $scope.doneDrawing();
             });
         }
     });

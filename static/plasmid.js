@@ -293,6 +293,41 @@ define(function(require, exports, module) {
         };
         return request;
     };
+    LocalStore.prototype.putmany = function(many) {
+        var store = this;
+        var autopush = this.autopush;
+        var request = new Promise(this);
+        var t = this.db.idb.transaction([this.storename], "readwrite");
+
+        function put_next() {
+            if (many.length === 0) {
+                request.trigger('success');
+            } else {
+                var next = many.pop();
+                var key = (next.key===null) ? random_token(16) : next.key;
+                var idbreq = t.objectStore(store.storename).put({
+                    key: key,
+                    value: next.value,
+                    revision: null
+                });
+                idbreq.onsuccess = function(event) {
+                    if (event.target.result) {
+                        put_next();
+                        store.trigger('update', key, event.target.result.value);
+                    } else {
+                        request.trigger('missing', key);
+                    }
+                };
+                idbreq.onerror = function(event) {
+                    request.trigger('error', 'unknown');
+                };
+            }
+        }
+
+        put_next();
+
+        return request;
+    };
 
     LocalStore.prototype._remove = function(key) {
         var store = this;
