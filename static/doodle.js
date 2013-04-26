@@ -22,16 +22,19 @@ var DoodleModule = new function() {
         });
 
         DoodleModule.saving = 0;
+        var b = $('body');
         this.db.saveStroke = function(from, to) {
             DoodleModule.saving += 1;
-            console.log('saving...', DoodleModule.saving);
+            b.css({background: 'rgb(100, 0, 0)'});
             this.stores.strokes.put(null, {
                 from: from,
                 to: to,
                 color: 'black',
             }).then(function(){
                 DoodleModule.saving -= 1;
-                console.log('saving...', DoodleModule.saving);
+                if (DoodleModule.saving === 0) {
+                    b.css({background: 'white'});
+                }
             });
         };
 
