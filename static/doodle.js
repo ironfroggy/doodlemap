@@ -45,9 +45,12 @@ var DoodleModule = new function() {
             }).then(function(){
                 if ($scope.doodles.length === 0) {
                     var doodle = {
-                        created: new Date()
+                        key: 1,
+                        value: {
+                            created: new Date()
+                        }
                     };
-                    $scope.doodles.push(doodles);
+                    $scope.doodles.push(doodle);
                     db.stores.doodles.put(1, doodle);
                 }
 
