@@ -12,5 +12,5 @@ require.config({
 require([
     'Plasmid',
 ], function(plasmid) {
-    DoodleApp.initialize(plasmid);
+    DoodleModule.app.initialize(plasmid);
 });
