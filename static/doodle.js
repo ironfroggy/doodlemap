@@ -23,15 +23,17 @@ var DoodleModule = new function() {
 
         DoodleModule.saving = 0;
         var b = $('body');
+        var s = $('.saving');
         this.db.saveStroke = function(from, to) {
             DoodleModule.saving += 1;
             b.css({background: 'rgb(100, 0, 0)'});
-            this.stores.strokes.put(null, {
+            this.stores.strokes.put((new Date), {
                 from: from,
                 to: to,
                 color: 'black',
             }).then(function(){
                 DoodleModule.saving -= 1;
+                s.text(DoodleModule.saving);
                 if (DoodleModule.saving === 0) {
                     b.css({background: 'white'});
                 }
