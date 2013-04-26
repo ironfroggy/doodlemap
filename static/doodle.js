@@ -21,43 +21,70 @@ var DoodleModule = new function() {
             },
         });
 
-        var q = [];
-        var b = $('body');
-        var s = $('.saving');
-        this.db.saveStroke = function(doodle, from, to) {
-            DoodleModule.saving += 1;
-            b.css({background: 'rgb(100, 0, 0)'});
-            q.push({
-                key: (new Date),
-                value: {
-                    from: from,
-                    to: to,
-                    color: 'black',
-                    doodle: doodle,
-                }
-            });
-        };
-
-        this.db.commitStrokes = function() {
-            this.stores.strokes.putmany(q).then(function(){
-                b.css({background: 'white'});
-            });
-            q = [];
-        };
-
         this.db.on('opensuccess', function() {
             root.$broadcast('dataReady', this);
         });
-
         var root = angular.element(document.querySelector('[ng-app]')).scope();
     }
+
+    app.factory('Doodles', function() {
+        var Doodles = [
+        ];
+
+        return Doodles;
+    });
+
+    app.controller('DoodleListCtrl', function($scope, Doodles) {
+        var root = angular.element(document.querySelector('[ng-app]')).scope();
+        $scope.doodles = Doodles;
+
+        root.$on('dataReady', function(root, db) {
+            db.stores.doodles.walk()
+            .on('each', function(doodle) {
+                $scope.doodles.push(doodle);
+            }).then(function(){
+                if ($scope.doodles.length === 0) {
+                    var doodle = {
+                        created: new Date()
+                    };
+                    $scope.doodles.push(doodles);
+                    db.stores.doodles.put(1, doodle);
+                }
+
+                $scope.$apply();
+            });
+        });
+
+        root.$on('newDoodle', function(s, newid) {
+            $scope.doodles.push(
+                {key: newid, value: {}});
+            $scope.$apply();
+        })
+    });
+    app.directive('selectdoodle', function() {
+        return function($scope, element, attrs) {
+            element.on('click', function() {
+                var root = angular.element(document.querySelector('[ng-app]')).scope();
+                root.$emit('selectDoodle', parseInt(attrs.selectdoodle));
+            });
+        }
+    });
+    app.directive('newdoodle', function() {
+        return function($scope, element, attrs) {
+            element.on('click', function() {
+                var root = angular.element(document.querySelector('[ng-app]')).scope();
+                var newid = $('[selectdoodle]').length + 1;
+                root.$emit('newDoodle', newid);
+                root.$emit('selectDoodle', newid);
+            });
+        }
+    });
 
     app.controller('PlayStrokes', function($scope) {
 
         var root = angular.element(document.querySelector('[ng-app]')).scope();
         root.$on('dataReady', function(root, db) {
             $scope.db = db;
-            console.log(db);
             $scope.redraw();
         });
 
@@ -65,6 +92,7 @@ var DoodleModule = new function() {
         root.$on('selectDoodle', function(root, id) {
             $scope.doodle_id = id;
             $scope.redraw();
+            $scope.db.stores.doodles.put(id, {});
         });
 
         $scope.redraw = function() {
@@ -112,13 +140,28 @@ var DoodleModule = new function() {
                     last_pos,
                     pos
                 ]);
-                app.db.saveStroke($scope.doodle_id, last_pos, pos);
+                this.saveStroke($scope.doodle_id, last_pos, pos);
             }
         };
 
-        $scope.doneDrawing = function() {
-            app.db.commitStrokes();
+        $scope.drawingStrokes = [];
+        $scope.saveStroke = function(doodle, from, to) {
+            this.drawingStrokes.push({
+                key: (new Date),
+                value: {
+                    from: from,
+                    to: to,
+                    color: 'black',
+                    doodle: doodle,
+                }
+            });
         };
+        $scope.doneDrawing = function() {
+            this.db.stores.strokes.putmany(this.drawingStrokes)
+            .then(function(){
+            });
+        };
+
     });
 
     function getContext(el) {

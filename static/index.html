@@ -24,27 +24,31 @@
     </head>
 
     <body>
-        <div class="navbar navbar-inverse navbar-fixed-top">
-          <div class="navbar-inner">
-            <div class="container">
-              <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-              </a>
-              <a class="brand" href="#">DoodleMap <span class=saving></span></a>
-              <div class="nav-collapse collapse">
-                <ul class="nav">
-                  <li class="active"><a href="#">Home</a></li>
-                  <li><a href="#1">Doodle 1</a></li>
-                  <li><a href="#2">Doodle 2</a></li>
-                </ul>
-              </div><!--/.nav-collapse -->
-            </div>
-          </div>
-        </div>
-
         <div ng-app=DoodleApp>
+
+            <div class="navbar navbar-inverse navbar-fixed-top">
+              <div class="navbar-inner">
+                <div class="container">
+                  <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                  </a>
+                  <a class="brand" href="#">DoodleMap <span class=saving></span></a>
+                  <div class="nav-collapse collapse">
+
+                    <ul class="nav" ng-controller=DoodleListCtrl>
+                      <li><a newdoodle>New Doodle</a></li>
+                      <li ng-repeat="doodle in doodles">
+                          <a selectdoodle={{doodle.key}}>Doodle {{doodle.key}}</a>
+                      </li>
+                    </ul>
+
+                  </div><!--/.nav-collapse -->
+                </div>
+              </div>
+            </div>
+
             <canvas draw display ng-controller=PlayStrokes></canvas>
         </div>
     </body>
