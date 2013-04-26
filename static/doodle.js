@@ -24,10 +24,18 @@ var DoodleModule = new function() {
         var q = [];
         var b = $('body');
         var s = $('.saving');
-        this.db.saveStroke = function(from, to) {
+        this.db.saveStroke = function(doodle, from, to) {
             DoodleModule.saving += 1;
             b.css({background: 'rgb(100, 0, 0)'});
-            q.push({key: (new Date), value: {from:from, to:to, color: 'black'}});
+            q.push({
+                key: (new Date),
+                value: {
+                    from: from,
+                    to: to,
+                    color: 'black',
+                    doodle: doodle,
+                }
+            });
         };
 
         this.db.commitStrokes = function() {
@@ -53,14 +61,22 @@ var DoodleModule = new function() {
             $scope.redraw();
         });
 
+        $scope.doodle_id = 1;
+        root.$on('selectDoodle', function(root, id) {
+            $scope.doodle_id = id;
+            $scope.redraw();
+        });
+
         $scope.redraw = function() {
             this.blank();
             this.db.stores.strokes.walk()
                 .on('each', function(record) {
-                    $scope.drawStrokes([
-                        record.value.from,
-                        record.value.to
-                    ]);
+                    if (record.value.doodle === $scope.doodle_id) {
+                        $scope.drawStrokes([
+                            record.value.from,
+                            record.value.to
+                        ]);
+                    }
                 })
             ;
         };
@@ -96,7 +112,7 @@ var DoodleModule = new function() {
                     last_pos,
                     pos
                 ]);
-                app.db.saveStroke(last_pos, pos);
+                app.db.saveStroke($scope.doodle_id, last_pos, pos);
             }
         };
 
