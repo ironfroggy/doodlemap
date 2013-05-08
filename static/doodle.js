@@ -100,15 +100,38 @@ var DoodleModule = new function() {
 
         $scope.redraw = function() {
             this.blank();
+            var points = [];
             this.db.stores.strokes.walk()
                 .on('each', function(record) {
                     if (record.value.doodle === $scope.doodle_id) {
+
+                        /*
+                        if (points.length>0) {
+                            var last = points[points.length - 1];
+                            if (last.x === record.value.from.x && last.y === record.value.from.y) {
+                                points.push(record.value.to);
+                            } else {
+                                $scope.drawStrokes(points);
+                                points = []
+                                points.push(record.value.from);
+                                points.push(record.value.to);
+                            }
+                        } else {
+                            points.push(record.value.from);
+                            points.push(record.value.to);
+                        }
+                        */
+
                         $scope.drawStrokes([
                             record.value.from,
                             record.value.to
                         ]);
+
                     }
-                })
+                }).then(function(){
+                    //console.log('draw remaining points', points.length);
+                    $scope.drawStrokes(points);
+                });
             ;
         };
 
